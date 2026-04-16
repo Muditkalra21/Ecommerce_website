@@ -101,38 +101,84 @@ sequenceDiagram
 
 ### Entity Relationship Diagram
 
-```
-users
-  │ id (PK)
-  │ name, email (UNIQUE), phone, address
-  │ created_at
-  │
-  ├─── cart_items (user_id FK) ──── products (product_id FK)
-  │       id, quantity, created_at
-  │       UNIQUE(user_id, product_id)
-  │
-  ├─── orders (user_id FK)
-  │       id, total_amount, status (ENUM), shipping_address
-  │       payment_method, created_at, updated_at
-  │       │
-  │       └─── order_items (order_id FK) ── products (product_id FK)
-  │               id, quantity, price (snapshot at order time)
-  │
-  └─── wishlist_items (user_id FK) ── products (product_id FK)
-          id, created_at
-          UNIQUE(user_id, product_id)
+```mermaid
+erDiagram
+    users {
+        int id PK
+        varchar name
+        varchar email
+        varchar phone
+        text address
+        timestamptz created_at
+    }
 
-categories
-  │ id (PK)
-  │ name (UNIQUE), slug (UNIQUE), icon, description
-  │
-  └─── products (category_id FK)
-          id, name, description
-          price (Numeric 10,2), original_price (Numeric 10,2)
-          discount_percent, stock, brand
-          rating, rating_count
-          image_url, images (JSON), specifications (JSON)
-          is_active, created_at
+    categories {
+        int id PK
+        varchar name
+        varchar slug
+        varchar icon
+        text description
+    }
+
+    products {
+        int id PK
+        varchar name
+        text description
+        numeric price
+        numeric original_price
+        int discount_percent
+        int stock
+        varchar brand
+        float rating
+        int rating_count
+        text image_url
+        boolean is_active
+        int category_id FK
+        timestamptz created_at
+    }
+
+    cart_items {
+        int id PK
+        int user_id FK
+        int product_id FK
+        int quantity
+        timestamptz created_at
+    }
+
+    orders {
+        int id PK
+        int user_id FK
+        numeric total_amount
+        enum status
+        text shipping_address
+        varchar payment_method
+        timestamptz created_at
+        timestamptz updated_at
+    }
+
+    order_items {
+        int id PK
+        int order_id FK
+        int product_id FK
+        int quantity
+        numeric price
+    }
+
+    wishlist_items {
+        int id PK
+        int user_id FK
+        int product_id FK
+        timestamptz created_at
+    }
+
+    users ||--o{ cart_items : "has"
+    users ||--o{ orders : "places"
+    users ||--o{ wishlist_items : "saves"
+    categories ||--o{ products : "contains"
+    products ||--o{ cart_items : "added to"
+    products ||--o{ order_items : "ordered in"
+    products ||--o{ wishlist_items : "saved in"
+    orders ||--|{ order_items : "contains"
 ```
 
 ### Table Definitions
