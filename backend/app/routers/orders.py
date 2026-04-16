@@ -96,12 +96,16 @@ async def place_order(
     )
 
     # Send confirmation email with PDF invoice in background
+    # Use customer-supplied email if provided, otherwise fall back to default user's email
     user = db.query(User).filter(User.id == DEFAULT_USER_ID).first()
-    if user:
+    recipient_email = payload.customer_email or (user.email if user else None)
+    recipient_name = user.name if user else "Customer"
+
+    if recipient_email:
         background_tasks.add_task(
             send_order_confirmation,
-            email=user.email,
-            user_name=user.name,
+            email=recipient_email,
+            user_name=recipient_name,
             order_id=order.id,
             items=order_items_data,
             total_amount=total,

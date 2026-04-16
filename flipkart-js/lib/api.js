@@ -60,10 +60,11 @@ export const getOrders = async () => {
   return data;
 };
 
-export const placeOrder = async (shippingAddress, paymentMethod = 'Cash on Delivery') => {
+export const placeOrder = async (shippingAddress, paymentMethod = 'Cash on Delivery', customerEmail = null) => {
   const { data } = await api.post('/api/orders', {
     shipping_address: shippingAddress,
     payment_method: paymentMethod,
+    ...(customerEmail && { customer_email: customerEmail }),
   });
   return data;
 };

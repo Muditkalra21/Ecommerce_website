@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { ShoppingCart, Trash2, Plus, Minus, ChevronRight, MapPin, CreditCard, Loader2 } from 'lucide-react';
+import { ShoppingCart, Trash2, Plus, Minus, ChevronRight, MapPin, CreditCard, Loader2, Mail } from 'lucide-react';
 import { getCart, updateCartItem, removeFromCart, placeOrder } from '../lib/api';
 import toast from 'react-hot-toast';
 
@@ -16,6 +16,7 @@ export default function CartPage() {
   const [placing, setPlacing] = useState(false);
   const [shippingAddress, setShippingAddress] = useState('123, MG Road, Bangalore, Karnataka 560001');
   const [paymentMethod, setPaymentMethod] = useState('Cash on Delivery');
+  const [customerEmail, setCustomerEmail] = useState('');
   const [checkoutStep, setCheckoutStep] = useState('cart');
   const [updatingItems, setUpdatingItems] = useState(new Set());
 
@@ -62,10 +63,14 @@ export default function CartPage() {
 
   const handlePlaceOrder = async () => {
     if (!shippingAddress.trim()) { toast.error('Please enter a shipping address'); return; }
+    if (customerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) {
+      toast.error('Please enter a valid email address');
+      return;
+    }
     setPlacing(true);
     try {
-      await placeOrder(shippingAddress, paymentMethod);
-      toast.success('🎉 Order placed successfully!');
+      await placeOrder(shippingAddress, paymentMethod, customerEmail || null);
+      toast.success('🎉 Order placed successfully! Check your email for confirmation.');
       window.dispatchEvent(new Event('cart-updated'));
       router.push('/orders');
     } catch (e) {
@@ -115,7 +120,7 @@ export default function CartPage() {
                     {i < STEPS.indexOf(checkoutStep) ? '✓' : i + 1}
                   </div>
                   <span style={{ fontWeight: checkoutStep === step ? 700 : 400, color: checkoutStep === step ? '#2874f0' : '#878787', fontSize: '12px', letterSpacing: '0.5px', textTransform: 'uppercase' }}>
-                    {step === 'cart' ? 'MY CART' : step === 'address' ? 'ADDRESS' : 'PAYMENT'}
+                    {step === 'cart' ? 'MY CART' : step === 'address' ? 'DETAILS' : 'PAYMENT'}
                   </span>
                 </div>
                 {i < 2 && <ChevronRight size={18} color="#ccc" style={{ marginLeft: 'auto', marginRight: 'auto' }} />}
@@ -193,6 +198,26 @@ export default function CartPage() {
                     </div>
                     <textarea value={shippingAddress} onChange={e => setShippingAddress(e.target.value)} rows={3} className="input-field" placeholder="Enter your full delivery address..." style={{ resize: 'vertical' }} />
                   </div>
+
+                  {/* Email for order confirmation */}
+                  <div style={{ marginBottom: '20px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, fontSize: '14px', marginBottom: '10px', color: '#212121' }}>
+                      <Mail size={16} color="#2874f0" /> Order Confirmation Email
+                    </label>
+                    <input
+                      id="customer-email"
+                      type="email"
+                      value={customerEmail}
+                      onChange={e => setCustomerEmail(e.target.value)}
+                      placeholder="Enter your email to receive order confirmation"
+                      className="input-field"
+                      style={{ width: '100%' }}
+                    />
+                    <p style={{ fontSize: '11px', color: '#878787', marginTop: '6px' }}>
+                      📧 A confirmation email with your invoice will be sent to this address. Leave blank to skip.
+                    </p>
+                  </div>
+
                   <div style={{ display: 'flex', gap: '12px' }}>
                     <button onClick={() => setCheckoutStep('cart')} className="btn-outline" style={{ flex: 1 }}>← Back</button>
                     <button onClick={() => setCheckoutStep('payment')} className="btn-primary" style={{ flex: 2 }}>Continue to Payment →</button>

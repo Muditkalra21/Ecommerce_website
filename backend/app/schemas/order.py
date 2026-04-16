@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 from datetime import datetime
 from ..models.order import OrderStatus
@@ -17,6 +17,7 @@ class OrderItemOut(BaseModel):
 class OrderCreate(BaseModel):
     shipping_address: str
     payment_method: Optional[str] = "Cash on Delivery"
+    customer_email: Optional[EmailStr] = None  # User-supplied email for order confirmation
 
 
 class OrderOut(BaseModel):

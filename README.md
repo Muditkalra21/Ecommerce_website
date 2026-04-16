@@ -25,7 +25,7 @@ A full-stack e-commerce web application inspired by Flipkart, built with **FastA
 - 🛒 **Shopping Cart** — Add, remove, update quantities, real-time total calculation
 - ❤️ **Wishlist** — Save products for later, move to cart
 - 📦 **Order Placement** — Place orders with shipping address and payment method
-- 📧 **Email Confirmation** — Automated order confirmation email on every purchase
+- 📧 **Email Confirmation** — Enter your email at checkout to receive a personalised order confirmation
 - 🧾 **PDF Invoice** — Flipkart-branded invoice auto-attached to confirmation email
 - 🗂️ **Order History** — View all past orders with full item breakdown
 - 🔄 **No Login Required** — Pre-seeded default user, works out of the box
@@ -80,8 +80,8 @@ sequenceDiagram
     participant BG as Background Task
     participant Mail as Gmail SMTP
 
-    User->>Frontend: Clicks "Place Order"
-    Frontend->>API: POST /api/orders { shipping_address, payment_method }
+    User->>Frontend: Enters email + clicks "Place Order"
+    Frontend->>API: POST /api/orders { shipping_address, payment_method, customer_email }
     API->>DB: Validate cart items + check stock
     DB-->>API: Cart items returned
     API->>DB: INSERT orders + order_items
@@ -92,7 +92,7 @@ sequenceDiagram
     API--)BG: Trigger background task (non-blocking)
     BG->>BG: Generate PDF invoice (ReportLab)
     BG->>Mail: Send HTML email + PDF attachment
-    Mail-->>User: 📧 Order confirmation + invoice in inbox
+    Mail-->>User: 📧 Order confirmation + invoice sent to customer_email
 ```
 
 ---
@@ -286,7 +286,7 @@ erDiagram
 | Method | Endpoint | Description |
 |--------|----------|-------------|
 | GET | `/api/orders` | Get all orders (newest first) |
-| POST | `/api/orders` | Place order from cart `{ shipping_address, payment_method }` |
+| POST | `/api/orders` | Place order from cart `{ shipping_address, payment_method, customer_email? }` |
 | GET | `/api/orders/{id}` | Get single order with all items |
 
 ### Wishlist
@@ -461,6 +461,17 @@ On every successful order, the system automatically:
 1. **Generates a PDF invoice** using ReportLab (in memory, no temp files)
 2. **Sends an HTML confirmation email** with the PDF attached via Gmail SMTP
 3. This runs as a **background task** — the order response is returned to the user instantly without waiting for the email
+
+### 📧 Customer Email Input (at Checkout)
+
+During checkout, users can enter **any email address** in the **"Order Confirmation Email"** field on the Address step. The confirmation email + PDF invoice will be sent to that address.
+
+- **If an email is entered** → confirmation sent to the customer-provided address
+- **If left blank** → falls back to the default user's email (configured via `MAIL_FROM` in `.env`)
+- **Email is validated** on the frontend before submission (must be a valid format)
+- The email is **not stored** in the database — it is only used to send the confirmation
+
+This makes it easy to test the email flow: just type your own email at checkout!
 
 **Invoice contains:**
 - Flipkart-branded header (blue banner)
