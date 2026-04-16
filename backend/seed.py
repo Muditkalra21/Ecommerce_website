@@ -87,7 +87,7 @@ PRODUCTS = [
         "description": "Quantum Dot technology, 120Hz refresh, Tizen OS, built-in Alexa, OTS sound system.",
         "price": 89990, "original_price": 129990, "discount_percent": 31,
         "brand": "Samsung", "stock": 15, "rating": 4.5, "rating_count": 7823,
-        "image_url": "https://images.unsplash.com/photo-1593359677879-a4bb92f829e1?w=400&q=80",
+        "image_url": "https://images.unsplash.com/photo-1567690187548-f07b1d7bf5a9?q=80&w=736&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?w=400&q=80",
         "category_slug": "electronics",
     },
     {
@@ -237,7 +237,7 @@ PRODUCTS = [
         "description": "Napoleon Hill's timeless classic on achieving success and wealth through positive thoughts.",
         "price": 199, "original_price": 350, "discount_percent": 43,
         "brand": "Fingerprint", "stock": 400, "rating": 4.5, "rating_count": 89450,
-        "image_url": "https://images.unsplash.com/photo-1476275466078-4cdc8acba14f?w=400&q=80",
+        "image_url": "https://images.unsplash.com/photo-1671774637925-c11dd0051b60?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?w=400&q=80",
         "category_slug": "books",
     },
     {
@@ -278,8 +278,8 @@ PRODUCTS = [
         "name": "Nivia Carbonite Basketball",
         "description": "Official size 7, rubber bladder, deep channel design for better grip, suitable for indoor/outdoor.",
         "price": 699, "original_price": 1299, "discount_percent": 46,
-        "brand": "Nivia", "stock": 200, "rating": 4.2, "rating_count": 18920,
-        "image_url": "https://images.unsplash.com/photo-1546519638405-a9f698f5a26e?w=400&q=80",
+        "brand": "Nivia", "stock": 5, "rating": 4.2, "rating_count": 18920,
+        "image_url": "https://plus.unsplash.com/premium_photo-1714573122704-51ae2abc3894?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?w=400&q=80",
         "category_slug": "sports-fitness",
     },
     {
@@ -328,8 +328,8 @@ PRODUCTS = [
         "name": "Philips Beard Trimmer BT3231",
         "description": "12 length settings, self-sharpening blades, 60 min runtime, USB charging, washable.",
         "price": 1299, "original_price": 2295, "discount_percent": 43,
-        "brand": "Philips", "stock": 180, "rating": 4.3, "rating_count": 89450,
-        "image_url": "https://images.unsplash.com/photo-1585073826064-29b8d3fc9c45?w=400&q=80",
+        "brand": "Philips", "stock": 18, "rating": 4.3, "rating_count": 89450,
+        "image_url": "https://images.unsplash.com/photo-1508380702597-707c1b00695c?q=80&w=1169&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?w=400&q=80",
         "category_slug": "beauty-health",
     },
     {
