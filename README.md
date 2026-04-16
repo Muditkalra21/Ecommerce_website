@@ -34,93 +34,68 @@ A full-stack e-commerce web application inspired by Flipkart, built with **FastA
 
 ## Architectural Flow
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                        BROWSER                              │
-│                   Next.js Frontend                          │
-│              (http://localhost:3000)                        │
-│                                                             │
-│  Pages: index.js | product/[id].js | cart.js |             │
-│         wishlist.js | orders.js                            │
-│                                                             │
-│  Components: Navbar | Footer | ProductCard                  │
-│                                                             │
-│  lib/api.js  ──── axios ──────────────────────────────┐    │
-└──────────────────────────────────────────────────────┼─────┘
-                                                        │ HTTP Requests
-                                                        │ (REST API)
-                                                        ▼
-┌─────────────────────────────────────────────────────────────┐
-│                    FastAPI Backend                          │
-│               (http://localhost:8000)                       │
-│                                                             │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │                  main.py                              │  │
-│  │  CORS Middleware → Router Registration               │  │
-│  └──────────────┬───────────────────────────────────────┘  │
-│                 │                                           │
-│    ┌────────────┼────────────────────────────────┐         │
-│    ▼            ▼            ▼                   ▼         │
-│  products    cart.py      orders.py          wishlist.py   │
-│  .py                                                        │
-│  /api/       /api/        /api/orders        /api/          │
-│  products    cart                            wishlist       │
-│                                                             │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │              Services Layer                           │  │
-│  │   email.py (SMTP)  +  invoice.py (ReportLab PDF)     │  │
-│  └──────────────────────────────────────────────────────┘  │
-│                                                             │
-│  ┌──────────────────────────────────────────────────────┐  │
-│  │              SQLAlchemy ORM                           │  │
-│  │         (models → database sessions)                 │  │
-│  └──────────────────────┬───────────────────────────────┘  │
-└─────────────────────────┼───────────────────────────────────┘
-                          │
-                          ▼
-┌─────────────────────────────────────────────────────────────┐
-│                   PostgreSQL Database                       │
-│                  (flipkart_db)                              │
-│                                                             │
-│   users | categories | products | cart_items |             │
-│   orders | order_items | wishlist_items                     │
-└─────────────────────────────────────────────────────────────┘
-                          │
-         Order Placed     │
-                          ▼
-┌─────────────────────────────────────────────────────────────┐
-│               Email Service (Background Task)              │
-│                                                             │
-│  1. invoice.py  →  Generates PDF in memory (ReportLab)     │
-│  2. email.py    →  Sends HTML email + PDF attachment        │
-│                    via Gmail SMTP (fastapi-mail)            │
-└─────────────────────────────────────────────────────────────┘
+```mermaid
+flowchart TD
+    subgraph Browser["🌐 Browser — Next.js Frontend (localhost:3000)"]
+        Pages["Pages\nindex.js · product/id.js · cart.js\nwishlist.js · orders.js"]
+        Components["Components\nNavbar · Footer · ProductCard"]
+        ApiLib["lib/api.js\nAxios HTTP Client"]
+        Pages --> Components
+        Pages --> ApiLib
+    end
+
+    subgraph Backend["⚙️ FastAPI Backend (localhost:8000)"]
+        Main["main.py\nCORS Middleware + Router Registration"]
+        subgraph Routers["Routers"]
+            R1["/api/products"]
+            R2["/api/cart"]
+            R3["/api/orders"]
+            R4["/api/wishlist"]
+        end
+        subgraph Services["Services"]
+            Email["email.py\nSMTP Mailer"]
+            Invoice["invoice.py\nReportLab PDF"]
+        end
+        ORM["SQLAlchemy ORM"]
+        Main --> Routers
+        R3 -->|"Background Task"| Invoice
+        Invoice --> Email
+        Routers --> ORM
+    end
+
+    subgraph DB["🗄️ PostgreSQL — flipkart_db"]
+        Tables["users · categories · products\ncart_items · orders · order_items · wishlist_items"]
+    end
+
+    ApiLib -->|"REST API calls"| Main
+    ORM --> Tables
+    Email -->|"Gmail SMTP"| MailBox["📧 User Inbox\nHTML Email + PDF Invoice"]
 ```
 
 ### Request Lifecycle (Example: Place Order)
 
-```
-1. User clicks "Place Order" on cart.js
-        │
-2. lib/api.js → POST /api/orders  { shipping_address, payment_method }
-        │
-3. FastAPI orders.py router receives request
-        │
-4. Validates cart is not empty + checks stock levels
-        │
-5. Creates Order + OrderItem rows in PostgreSQL
-        │
-6. Reduces product stock, clears cart items
-        │
-7. Commits DB transaction
-        │
-8. Triggers background task (non-blocking):
-        │   → generate PDF invoice (ReportLab)
-        │   → send email with PDF attachment (fastapi-mail)
-        │
-9. Returns order data to frontend (instant)
-        │
-10. cart.js redirects user to /orders
+```mermaid
+sequenceDiagram
+    actor User
+    participant Frontend as Next.js (cart.js)
+    participant API as FastAPI (orders.py)
+    participant DB as PostgreSQL
+    participant BG as Background Task
+    participant Mail as Gmail SMTP
+
+    User->>Frontend: Clicks "Place Order"
+    Frontend->>API: POST /api/orders { shipping_address, payment_method }
+    API->>DB: Validate cart items + check stock
+    DB-->>API: Cart items returned
+    API->>DB: INSERT orders + order_items
+    API->>DB: UPDATE product stock
+    API->>DB: DELETE cart_items
+    API-->>Frontend: ✅ Order confirmed (instant response)
+    Frontend-->>User: Redirect to /orders page
+    API--)BG: Trigger background task (non-blocking)
+    BG->>BG: Generate PDF invoice (ReportLab)
+    BG->>Mail: Send HTML email + PDF attachment
+    Mail-->>User: 📧 Order confirmation + invoice in inbox
 ```
 
 ---
