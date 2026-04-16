@@ -499,6 +499,3 @@ The `seed.py` script populates:
 
 ---
 
-## License
-
-MIT
