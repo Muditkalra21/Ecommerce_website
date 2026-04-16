@@ -35,41 +35,38 @@ A full-stack e-commerce web application inspired by Flipkart, built with **FastA
 ## Architectural Flow
 
 ```mermaid
-flowchart TD
-    subgraph Browser["🌐 Browser — Next.js Frontend (localhost:3000)"]
-        Pages["Pages\nindex.js · product/id.js · cart.js\nwishlist.js · orders.js"]
+flowchart LR
+    User(["👤 User / Browser"])
+
+    subgraph Frontend["Frontend (localhost:3000)"]
+        Pages["Next.js Pages\nindex · cart · wishlist\norders · product/id"]
         Components["Components\nNavbar · Footer · ProductCard"]
-        ApiLib["lib/api.js\nAxios HTTP Client"]
+        ApiLib["lib/api.js\nAxios Client"]
         Pages --> Components
-        Pages --> ApiLib
     end
 
-    subgraph Backend["⚙️ FastAPI Backend (localhost:8000)"]
-        Main["main.py\nCORS Middleware + Router Registration"]
-        subgraph Routers["Routers"]
-            R1["/api/products"]
-            R2["/api/cart"]
-            R3["/api/orders"]
-            R4["/api/wishlist"]
-        end
-        subgraph Services["Services"]
-            Email["email.py\nSMTP Mailer"]
-            Invoice["invoice.py\nReportLab PDF"]
-        end
+    subgraph Backend["Backend (localhost:8000)"]
+        FastAPI["FastAPI\nmain.py + Routers"]
         ORM["SQLAlchemy ORM"]
-        Main --> Routers
-        R3 -->|"Background Task"| Invoice
-        Invoice --> Email
-        Routers --> ORM
+        FastAPI --> ORM
     end
 
-    subgraph DB["🗄️ PostgreSQL — flipkart_db"]
-        Tables["users · categories · products\ncart_items · orders · order_items · wishlist_items"]
+    subgraph Database["Database"]
+        PG[("PostgreSQL\nflipkart_db")]
     end
 
-    ApiLib -->|"REST API calls"| Main
-    ORM --> Tables
-    Email -->|"Gmail SMTP"| MailBox["📧 User Inbox\nHTML Email + PDF Invoice"]
+    subgraph EmailService["Email Service"]
+        Invoice["invoice.py\nReportLab PDF"]
+        Mail["email.py\nGmail SMTP"]
+        Invoice --> Mail
+    end
+
+    User -->|"HTTPS"| Pages
+    Pages -->|"API calls"| ApiLib
+    ApiLib -->|"REST"| FastAPI
+    ORM -->|"SQL queries"| PG
+    FastAPI -->|"Background Task"| Invoice
+    Mail -->|"Confirmation + PDF"| User
 ```
 
 ### Request Lifecycle (Example: Place Order)
