@@ -295,7 +295,7 @@ PRODUCTS = [
         "description": "Non-slip surface, extra thick 6mm cushioning, lightweight, comes with carrying strap.",
         "price": 1299, "original_price": 2199, "discount_percent": 41,
         "brand": "Yoga Direct", "stock": 250, "rating": 4.4, "rating_count": 45670,
-        "image_url": "https://images.unsplash.com/photo-1601925228099-e918a6069c90?w=400&q=80",
+        "image_url": "https://images.unsplash.com/photo-1763043778073-0174fbed4170?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?w=400&q=80",
         "category_slug": "sports-fitness",
     },
 
@@ -337,7 +337,7 @@ PRODUCTS = [
         "description": "1.5% pure hyaluronic acid, plumps and visibly fills wrinkles, suitable for all skin types.",
         "price": 1299, "original_price": 1799, "discount_percent": 28,
         "brand": "L'Oreal Paris", "stock": 220, "rating": 4.5, "rating_count": 45670,
-        "image_url": "https://images.unsplash.com/photo-1547824806-821fe73735b3?w=400&q=80",
+        "image_url": "https://images.unsplash.com/photo-1710382984773-2c04ee8774ed?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?w=400&q=80",
         "category_slug": "beauty-health",
     },
 
@@ -363,7 +363,7 @@ PRODUCTS = [
         "description": "5-story garage with elevator, spiral racing ramp, parking for 140+ cars, includes 2 cars.",
         "price": 7999, "original_price": 11999, "discount_percent": 33,
         "brand": "Hot Wheels", "stock": 45, "rating": 4.5, "rating_count": 8760,
-        "image_url": "https://images.unsplash.com/photo-1594736797933-d0401ba2fe65?w=400&q=80",
+        "image_url": "https://images.unsplash.com/photo-1555448049-8affc0fd79f3?q=80&w=1170&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?w=400&q=80",
         "category_slug": "toys-games",
     },
     {
@@ -371,7 +371,7 @@ PRODUCTS = [
         "description": "Beloved property trading game in a fast-paced card format. 2-5 players, 15 mins per game.",
         "price": 599, "original_price": 999, "discount_percent": 40,
         "brand": "Hasbro", "stock": 350, "rating": 4.6, "rating_count": 45670,
-        "image_url": "https://images.unsplash.com/photo-1606503153255-59d5e417b0e5?w=400&q=80",
+        "image_url": "https://images.unsplash.com/photo-1703925153100-43afda8b6506?q=80&w=1074&auto=format&fit=crop&ixlib=rb-4.1.0&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D?w=400&q=80",
         "category_slug": "toys-games",
     },
     {
