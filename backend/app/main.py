@@ -29,7 +29,8 @@ app = FastAPI(
 _allowed_origins = list({
     "http://localhost:3000",
     "http://127.0.0.1:3000",
-    settings.FRONTEND_URL.rstrip("/"),   # strip accidental trailing slash
+    "https://ecomwebsite-two.vercel.app",   # production frontend (hardcoded fallback)
+    settings.FRONTEND_URL.rstrip("/"),       # from FRONTEND_URL env var on Render
 })
 
 # Pattern to also allow all Vercel preview/production URLs dynamically
