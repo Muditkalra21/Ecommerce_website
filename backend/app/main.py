@@ -1,5 +1,7 @@
-from fastapi import FastAPI
+import re
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 
 from .core.config import settings
 from .core.database import engine
@@ -23,13 +25,29 @@ app = FastAPI(
 )
 
 # ── CORS ────────────────────────────────────────────────────────────────────
+# Build list of allowed origins
+_allowed_origins = list({
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    settings.FRONTEND_URL.rstrip("/"),   # strip accidental trailing slash
+})
+
+# Pattern to also allow all Vercel preview/production URLs dynamically
+_vercel_pattern = re.compile(r"https://[\w-]+\.vercel\.app$")
+
+
+def _origin_allowed(origin: str) -> bool:
+    if origin in _allowed_origins:
+        return True
+    if _vercel_pattern.match(origin):
+        return True
+    return False
+
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        settings.FRONTEND_URL,
-    ],
+    allow_origins=_allowed_origins,
+    allow_origin_regex=r"https://[\w-]+\.vercel\.app",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
