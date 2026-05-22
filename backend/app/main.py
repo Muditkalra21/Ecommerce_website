@@ -54,6 +54,26 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+
+# ── Global exception handler — always adds CORS headers ──────────────────────
+# Starlette's CORSMiddleware does NOT add headers when an unhandled exception
+# occurs inside a route (e.g. DB connection failure). This handler ensures the
+# browser always receives CORS headers so the real error is visible in the console.
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    origin = request.headers.get("origin", "")
+    cors_origin = origin if _origin_allowed(origin) else ""
+    headers = {}
+    if cors_origin:
+        headers["Access-Control-Allow-Origin"] = cors_origin
+        headers["Access-Control-Allow-Credentials"] = "true"
+    return JSONResponse(
+        status_code=500,
+        content={"detail": f"Internal server error: {type(exc).__name__}: {exc}"},
+        headers=headers,
+    )
+
+
 # ── Routers ─────────────────────────────────────────────────────────────────
 app.include_router(auth.router)
 app.include_router(products.router)
@@ -75,3 +95,21 @@ def root():
 @app.get("/api/health")
 def health_check():
     return {"status": "healthy", "service": "flipkart-clone-api"}
+
+
+@app.get("/api/health/db")
+def health_check_db():
+    """Check DB connectivity — useful for diagnosing Render deployment issues."""
+    from sqlalchemy import text
+    from .core.database import SessionLocal
+    db = SessionLocal()
+    try:
+        db.execute(text("SELECT 1"))
+        return {"status": "healthy", "database": "connected"}
+    except Exception as e:
+        return JSONResponse(
+            status_code=500,
+            content={"status": "unhealthy", "database": "disconnected", "error": str(e)},
+        )
+    finally:
+        db.close()
