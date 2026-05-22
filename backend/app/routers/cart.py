@@ -1,22 +1,23 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session, joinedload
 
-from ..core.deps import get_db
-from ..core.config import settings
+from ..core.deps import get_db, get_current_user
 from ..models import CartItem, Product
+from ..models.user import User
 from ..schemas import CartItemCreate, CartItemUpdate, CartItemOut, CartResponse
 
 router = APIRouter(prefix="/api/cart", tags=["cart"])
 
-DEFAULT_USER_ID = settings.DEFAULT_USER_ID
-
 
 @router.get("", response_model=CartResponse)
-def get_cart(db: Session = Depends(get_db)):
+def get_cart(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     items = (
         db.query(CartItem)
         .options(joinedload(CartItem.product).joinedload(Product.category))
-        .filter(CartItem.user_id == DEFAULT_USER_ID)
+        .filter(CartItem.user_id == current_user.id)
         .all()
     )
     subtotal = sum(item.product.price * item.quantity for item in items)
@@ -28,13 +29,17 @@ def get_cart(db: Session = Depends(get_db)):
 
 
 @router.post("", response_model=CartItemOut)
-def add_to_cart(payload: CartItemCreate, db: Session = Depends(get_db)):
+def add_to_cart(
+    payload: CartItemCreate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     product = db.query(Product).filter(Product.id == payload.product_id, Product.is_active == True).first()
     if not product:
         raise HTTPException(status_code=404, detail="Product not found")
 
     existing = db.query(CartItem).filter(
-        CartItem.user_id == DEFAULT_USER_ID,
+        CartItem.user_id == current_user.id,
         CartItem.product_id == payload.product_id,
     ).first()
 
@@ -48,7 +53,7 @@ def add_to_cart(payload: CartItemCreate, db: Session = Depends(get_db)):
         return item
 
     cart_item = CartItem(
-        user_id=DEFAULT_USER_ID,
+        user_id=current_user.id,
         product_id=payload.product_id,
         quantity=payload.quantity,
     )
@@ -62,9 +67,14 @@ def add_to_cart(payload: CartItemCreate, db: Session = Depends(get_db)):
 
 
 @router.put("/{item_id}", response_model=CartItemOut)
-def update_cart_item(item_id: int, payload: CartItemUpdate, db: Session = Depends(get_db)):
+def update_cart_item(
+    item_id: int,
+    payload: CartItemUpdate,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     item = db.query(CartItem).filter(
-        CartItem.id == item_id, CartItem.user_id == DEFAULT_USER_ID
+        CartItem.id == item_id, CartItem.user_id == current_user.id
     ).first()
     if not item:
         raise HTTPException(status_code=404, detail="Cart item not found")
@@ -84,9 +94,13 @@ def update_cart_item(item_id: int, payload: CartItemUpdate, db: Session = Depend
 
 
 @router.delete("/{item_id}")
-def remove_from_cart(item_id: int, db: Session = Depends(get_db)):
+def remove_from_cart(
+    item_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     item = db.query(CartItem).filter(
-        CartItem.id == item_id, CartItem.user_id == DEFAULT_USER_ID
+        CartItem.id == item_id, CartItem.user_id == current_user.id
     ).first()
     if not item:
         raise HTTPException(status_code=404, detail="Cart item not found")
@@ -96,7 +110,10 @@ def remove_from_cart(item_id: int, db: Session = Depends(get_db)):
 
 
 @router.delete("")
-def clear_cart(db: Session = Depends(get_db)):
-    db.query(CartItem).filter(CartItem.user_id == DEFAULT_USER_ID).delete()
+def clear_cart(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    db.query(CartItem).filter(CartItem.user_id == current_user.id).delete()
     db.commit()
     return {"message": "Cart cleared"}

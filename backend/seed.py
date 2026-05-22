@@ -428,25 +428,14 @@ PRODUCTS = [
 
 
 def seed():
-    from app.models import User, Category, Product  # local import after sys.path set
+    from app.models import Category, Product  # local import after sys.path set
     db = SessionLocal()
     try:
-        if db.query(User).count() > 0:
+        if db.query(Category).count() > 0:
             print("Database already seeded!")
             return
 
         print("🌱 Starting database seed...")
-
-        default_user = User(
-            id=1,
-            name="Mudit Kalra",
-            email="mudit0660.be23@chitkara.edu.in",
-            phone="+91 9876543210",
-            address="Chitkara University",
-        )
-        db.add(default_user)
-        db.flush()
-        print("✅ Default user created")
 
         category_map = {}
         for cat_data in CATEGORIES:
@@ -464,9 +453,9 @@ def seed():
 
         db.commit()
         print("\n🎉 Database seeded successfully!")
-        print(f"   - 1 default user")
         print(f"   - {len(CATEGORIES)} categories")
         print(f"   - {len(PRODUCTS)} products")
+        print("   - Users will be created when they register via /login")
 
     except Exception as e:
         db.rollback()

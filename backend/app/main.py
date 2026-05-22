@@ -9,6 +9,7 @@ from .models import (  # noqa: F401 – import all so metadata is populated
 from .models.user import User as UserModel  # ensure Base is common
 from .core.database import Base
 from .routers import products, cart, orders, wishlist
+from .routers import auth
 
 # Create all tables on startup
 Base.metadata.create_all(bind=engine)
@@ -35,6 +36,7 @@ app.add_middleware(
 )
 
 # ── Routers ─────────────────────────────────────────────────────────────────
+app.include_router(auth.router)
 app.include_router(products.router)
 app.include_router(cart.router)
 app.include_router(orders.router)

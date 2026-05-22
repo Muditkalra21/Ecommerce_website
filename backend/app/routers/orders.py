@@ -1,25 +1,26 @@
 from fastapi import APIRouter, Depends, HTTPException, BackgroundTasks
 from sqlalchemy.orm import Session, joinedload
 
-from ..core.deps import get_db
-from ..core.config import settings
-from ..models import Order, OrderItem, CartItem, Product, User
+from ..core.deps import get_db, get_current_user
+from ..models import Order, OrderItem, CartItem, Product
+from ..models.user import User
 from ..schemas import OrderCreate, OrderOut, OrdersResponse
 from ..services.email import send_order_confirmation
 
 router = APIRouter(prefix="/api/orders", tags=["orders"])
 
-DEFAULT_USER_ID = settings.DEFAULT_USER_ID
-
 
 @router.get("", response_model=OrdersResponse)
-def get_orders(db: Session = Depends(get_db)):
+def get_orders(
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     orders = (
         db.query(Order)
         .options(
             joinedload(Order.items).joinedload(OrderItem.product).joinedload(Product.category)
         )
-        .filter(Order.user_id == DEFAULT_USER_ID)
+        .filter(Order.user_id == current_user.id)
         .order_by(Order.created_at.desc())
         .all()
     )
@@ -31,12 +32,13 @@ async def place_order(
     payload: OrderCreate,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
 ):
     # Get cart items
     cart_items = (
         db.query(CartItem)
         .options(joinedload(CartItem.product))
-        .filter(CartItem.user_id == DEFAULT_USER_ID)
+        .filter(CartItem.user_id == current_user.id)
         .all()
     )
 
@@ -56,7 +58,7 @@ async def place_order(
 
     # Create order
     order = Order(
-        user_id=DEFAULT_USER_ID,
+        user_id=current_user.id,
         total_amount=total,
         shipping_address=payload.shipping_address,
         payment_method=payload.payment_method,
@@ -82,7 +84,7 @@ async def place_order(
         })
 
     # Clear cart
-    db.query(CartItem).filter(CartItem.user_id == DEFAULT_USER_ID).delete()
+    db.query(CartItem).filter(CartItem.user_id == current_user.id).delete()
     db.commit()
 
     # Reload order with relationships
@@ -95,11 +97,9 @@ async def place_order(
         .first()
     )
 
-    # Send confirmation email with PDF invoice in background
-    # Use customer-supplied email if provided, otherwise fall back to default user's email
-    user = db.query(User).filter(User.id == DEFAULT_USER_ID).first()
-    recipient_email = payload.customer_email or (user.email if user else None)
-    recipient_name = user.name if user else "Customer"
+    # Send confirmation email — use authenticated user's email directly
+    recipient_email = payload.customer_email or current_user.email
+    recipient_name = current_user.name
 
     if recipient_email:
         background_tasks.add_task(
@@ -118,13 +118,17 @@ async def place_order(
 
 
 @router.get("/{order_id}", response_model=OrderOut)
-def get_order(order_id: int, db: Session = Depends(get_db)):
+def get_order(
+    order_id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
     order = (
         db.query(Order)
         .options(
             joinedload(Order.items).joinedload(OrderItem.product).joinedload(Product.category)
         )
-        .filter(Order.id == order_id, Order.user_id == DEFAULT_USER_ID)
+        .filter(Order.id == order_id, Order.user_id == current_user.id)
         .first()
     )
     if not order:

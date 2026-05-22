@@ -4,8 +4,9 @@ import Link from 'next/link';
 import { Heart, ShoppingCart, Trash2, Loader2 } from 'lucide-react';
 import { getWishlist, removeFromWishlist, addToCart } from '../lib/api';
 import toast from 'react-hot-toast';
+import withAuth from '../components/ProtectedRoute';
 
-export default function WishlistPage() {
+function WishlistPage() {
   const [items, setItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const [removingItems, setRemovingItems] = useState(new Set());
@@ -156,3 +157,5 @@ export default function WishlistPage() {
     </>
   );
 }
+
+export default withAuth(WishlistPage);

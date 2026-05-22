@@ -32,3 +32,8 @@ CLAUDE.md
 agents.md
 .gemini/
 .antigravity/
+.agents/
+
+# ── Graphify ──────────────────────────────────────────────────────────────────
+graphify-out/
+.graphifyignore

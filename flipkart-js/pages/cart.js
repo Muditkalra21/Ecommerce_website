@@ -2,21 +2,23 @@ import { useState, useEffect } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { ShoppingCart, Trash2, Plus, Minus, ChevronRight, MapPin, CreditCard, Loader2, Mail } from 'lucide-react';
+import { ShoppingCart, Trash2, Plus, Minus, ChevronRight, MapPin, CreditCard, Loader2 } from 'lucide-react';
 import { getCart, updateCartItem, removeFromCart, placeOrder } from '../lib/api';
 import toast from 'react-hot-toast';
+import withAuth from '../components/ProtectedRoute';
+import { useAuth } from '../contexts/AuthContext';
 
 const PAYMENT_METHODS = ['Cash on Delivery', 'Credit/Debit Card', 'UPI', 'Net Banking', 'Flipkart Pay Later'];
 const STEPS = ['cart', 'address', 'payment'];
 
-export default function CartPage() {
+function CartPage() {
   const router = useRouter();
+  const { user } = useAuth();
   const [cart, setCart] = useState(null);
   const [loading, setLoading] = useState(true);
   const [placing, setPlacing] = useState(false);
   const [shippingAddress, setShippingAddress] = useState('123, MG Road, Bangalore, Karnataka 560001');
   const [paymentMethod, setPaymentMethod] = useState('Cash on Delivery');
-  const [customerEmail, setCustomerEmail] = useState('');
   const [checkoutStep, setCheckoutStep] = useState('cart');
   const [updatingItems, setUpdatingItems] = useState(new Set());
 
@@ -63,14 +65,10 @@ export default function CartPage() {
 
   const handlePlaceOrder = async () => {
     if (!shippingAddress.trim()) { toast.error('Please enter a shipping address'); return; }
-    if (customerEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(customerEmail)) {
-      toast.error('Please enter a valid email address');
-      return;
-    }
     setPlacing(true);
     try {
-      await placeOrder(shippingAddress, paymentMethod, customerEmail || null);
-      toast.success('🎉 Order placed successfully! Check your email for confirmation.');
+      await placeOrder(shippingAddress, paymentMethod);
+      toast.success('🎉 Order placed! Confirmation email sent to ' + user?.email);
       window.dispatchEvent(new Event('cart-updated'));
       router.push('/orders');
     } catch (e) {
@@ -194,29 +192,14 @@ export default function CartPage() {
                   <div style={{ background: '#f0f4ff', border: '2px solid #2874f0', borderRadius: '4px', padding: '16px', marginBottom: '20px' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
                       <span style={{ background: '#2874f0', color: 'white', fontSize: '10px', fontWeight: 700, padding: '2px 8px', borderRadius: '2px' }}>HOME</span>
-                      <span style={{ fontWeight: 600 }}>Mudit Kalra</span>
+                      <span style={{ fontWeight: 600 }}>{user?.name}</span>
                     </div>
                     <textarea value={shippingAddress} onChange={e => setShippingAddress(e.target.value)} rows={3} className="input-field" placeholder="Enter your full delivery address..." style={{ resize: 'vertical' }} />
                   </div>
 
-                  {/* Email for order confirmation */}
-                  <div style={{ marginBottom: '20px' }}>
-                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600, fontSize: '14px', marginBottom: '10px', color: '#212121' }}>
-                      <Mail size={16} color="#2874f0" /> Order Confirmation Email
-                    </label>
-                    <input
-                      id="customer-email"
-                      type="email"
-                      value={customerEmail}
-                      onChange={e => setCustomerEmail(e.target.value)}
-                      placeholder="Enter your email to receive order confirmation"
-                      className="input-field"
-                      style={{ width: '100%' }}
-                    />
-                    <p style={{ fontSize: '11px', color: '#878787', marginTop: '6px' }}>
-                      📧 A confirmation email with your invoice will be sent to this address. Leave blank to skip.
-                    </p>
-                  </div>
+                  <p style={{ fontSize: '12px', color: '#878787', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    📧 Order confirmation will be sent to <strong>{user?.email}</strong>
+                  </p>
 
                   <div style={{ display: 'flex', gap: '12px' }}>
                     <button onClick={() => setCheckoutStep('cart')} className="btn-outline" style={{ flex: 1 }}>← Back</button>
@@ -285,3 +268,5 @@ export default function CartPage() {
     </>
   );
 }
+
+export default withAuth(CartPage);

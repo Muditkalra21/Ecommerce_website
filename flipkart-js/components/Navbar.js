@@ -1,19 +1,24 @@
 'use client';
 import Link from 'next/link';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/router';
-import { ShoppingCart, Heart, Package, Search, Menu, X, User, ChevronDown } from 'lucide-react';
+import { ShoppingCart, Heart, Package, Search, Menu, X, User, ChevronDown, LogOut, LogIn } from 'lucide-react';
 import { getCart, getWishlist } from '../lib/api';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Navbar() {
   const router = useRouter();
+  const { user, isAuthenticated, logout } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [cartCount, setCartCount] = useState(0);
   const [wishlistCount, setWishlistCount] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const userMenuRef = useRef(null);
 
   const fetchCounts = async () => {
+    if (!isAuthenticated) { setCartCount(0); setWishlistCount(0); return; }
     try {
       const [cart, wishlist] = await Promise.all([getCart(), getWishlist()]);
       setCartCount(cart.total_items);
@@ -29,12 +34,23 @@ export default function Navbar() {
       window.removeEventListener('cart-updated', fetchCounts);
       window.removeEventListener('wishlist-updated', fetchCounts);
     };
-  }, []);
+  }, [isAuthenticated]);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 0);
     window.addEventListener('scroll', onScroll);
     return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Close user dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (userMenuRef.current && !userMenuRef.current.contains(e.target)) {
+        setUserMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
   const handleSearch = (e) => {
@@ -56,7 +72,10 @@ export default function Navbar() {
     transition: 'background 0.2s',
     position: 'relative',
     cursor: 'pointer',
+    textDecoration: 'none',
   };
+
+  const firstName = user?.name?.split(' ')[0] || 'Account';
 
   return (
     <header style={{
@@ -105,9 +124,55 @@ export default function Navbar() {
 
           {/* Desktop Nav */}
           <nav style={{ display: 'flex', alignItems: 'center', gap: '4px' }} className="hide-mobile">
-            <div style={{ ...navLinkStyle }}>
-              <User size={16} /> Mudit <ChevronDown size={14} />
-            </div>
+
+            {/* User menu */}
+            {isAuthenticated ? (
+              <div ref={userMenuRef} style={{ position: 'relative' }}>
+                <button
+                  id="user-menu-btn"
+                  onClick={() => setUserMenuOpen(v => !v)}
+                  style={{ ...navLinkStyle, background: userMenuOpen ? 'rgba(255,255,255,0.15)' : 'transparent', border: 'none' }}
+                >
+                  <User size={16} />
+                  {firstName}
+                  <ChevronDown size={14} style={{ transition: 'transform 0.2s', transform: userMenuOpen ? 'rotate(180deg)' : 'none' }} />
+                </button>
+
+                {userMenuOpen && (
+                  <div style={{
+                    position: 'absolute', top: 'calc(100% + 8px)', right: 0,
+                    background: 'white', borderRadius: '8px', boxShadow: '0 8px 32px rgba(0,0,0,0.15)',
+                    minWidth: '200px', padding: '8px', zIndex: 100,
+                    animation: 'fadeSlideDown 0.15s ease',
+                  }}>
+                    <div style={{ padding: '12px 16px', borderBottom: '1px solid #f0f0f0', marginBottom: '4px' }}>
+                      <p style={{ fontWeight: 700, fontSize: '14px', color: '#212121' }}>{user.name}</p>
+                      <p style={{ fontSize: '12px', color: '#878787', marginTop: '2px' }}>{user.email}</p>
+                    </div>
+                    <Link href="/orders" onClick={() => setUserMenuOpen(false)} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', color: '#212121', fontSize: '14px', fontWeight: 500, borderRadius: '6px', transition: 'background 0.15s' }}
+                      onMouseOver={e => e.currentTarget.style.background = '#f5f5f5'}
+                      onMouseOut={e => e.currentTarget.style.background = 'transparent'}>
+                      <Package size={16} color="#2874f0" /> My Orders
+                    </Link>
+                    <button
+                      id="logout-btn"
+                      onClick={() => { setUserMenuOpen(false); logout(); }}
+                      style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 16px', color: '#ff4040', fontSize: '14px', fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer', borderRadius: '6px', transition: 'background 0.15s', fontFamily: 'Inter, sans-serif' }}
+                      onMouseOver={e => e.currentTarget.style.background = '#fff0f0'}
+                      onMouseOut={e => e.currentTarget.style.background = 'transparent'}
+                    >
+                      <LogOut size={16} /> Logout
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <Link href="/login" style={{ ...navLinkStyle, background: 'white', color: '#2874f0' }}
+                onMouseOver={e => e.currentTarget.style.opacity = '0.9'}
+                onMouseOut={e => e.currentTarget.style.opacity = '1'}>
+                <LogIn size={16} /> Login
+              </Link>
+            )}
 
             <Link href="/orders" style={navLinkStyle}
               onMouseOver={e => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
@@ -163,17 +228,47 @@ export default function Navbar() {
       {/* Mobile menu */}
       {mobileMenuOpen && (
         <div style={{ background: 'white', borderTop: '1px solid #eee', padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-          <Link href="/orders" style={{ padding: '12px', color: '#212121', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }} onClick={() => setMobileMenuOpen(false)}>
-            <Package size={18} /> My Orders
-          </Link>
-          <Link href="/wishlist" style={{ padding: '12px', color: '#212121', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }} onClick={() => setMobileMenuOpen(false)}>
-            <Heart size={18} /> Wishlist {wishlistCount > 0 && `(${wishlistCount})`}
-          </Link>
-          <Link href="/cart" style={{ padding: '12px', color: '#212121', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }} onClick={() => setMobileMenuOpen(false)}>
-            <ShoppingCart size={18} /> Cart {cartCount > 0 && `(${cartCount})`}
-          </Link>
+          {isAuthenticated ? (
+            <>
+              <div style={{ padding: '12px 12px 8px', borderBottom: '1px solid #f0f0f0', marginBottom: '4px' }}>
+                <p style={{ fontWeight: 700, fontSize: '14px' }}>{user.name}</p>
+                <p style={{ fontSize: '12px', color: '#878787' }}>{user.email}</p>
+              </div>
+              <Link href="/orders" style={{ padding: '12px', color: '#212121', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }} onClick={() => setMobileMenuOpen(false)}>
+                <Package size={18} /> My Orders
+              </Link>
+              <Link href="/wishlist" style={{ padding: '12px', color: '#212121', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }} onClick={() => setMobileMenuOpen(false)}>
+                <Heart size={18} /> Wishlist {wishlistCount > 0 && `(${wishlistCount})`}
+              </Link>
+              <Link href="/cart" style={{ padding: '12px', color: '#212121', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }} onClick={() => setMobileMenuOpen(false)}>
+                <ShoppingCart size={18} /> Cart {cartCount > 0 && `(${cartCount})`}
+              </Link>
+              <button onClick={() => { setMobileMenuOpen(false); logout(); }} style={{ padding: '12px', color: '#ff4040', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px', background: 'none', border: 'none', cursor: 'pointer', fontSize: '14px', fontFamily: 'Inter, sans-serif' }}>
+                <LogOut size={18} /> Logout
+              </button>
+            </>
+          ) : (
+            <>
+              <Link href="/login" style={{ padding: '12px', color: '#2874f0', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '8px' }} onClick={() => setMobileMenuOpen(false)}>
+                <LogIn size={18} /> Login / Register
+              </Link>
+              <Link href="/orders" style={{ padding: '12px', color: '#212121', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }} onClick={() => setMobileMenuOpen(false)}>
+                <Package size={18} /> Orders
+              </Link>
+              <Link href="/cart" style={{ padding: '12px', color: '#212121', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }} onClick={() => setMobileMenuOpen(false)}>
+                <ShoppingCart size={18} /> Cart
+              </Link>
+            </>
+          )}
         </div>
       )}
+
+      <style>{`
+        @keyframes fadeSlideDown {
+          from { opacity: 0; transform: translateY(-8px); }
+          to   { opacity: 1; transform: translateY(0); }
+        }
+      `}</style>
     </header>
   );
 }

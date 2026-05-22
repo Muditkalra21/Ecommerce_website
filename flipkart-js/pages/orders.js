@@ -3,6 +3,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { Package, ChevronRight, Clock, Truck, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { getOrders } from '../lib/api';
+import withAuth from '../components/ProtectedRoute';
 
 const STATUS_CONFIG = {
   pending:   { label: 'Pending',   color: '#ff9f00', bg: '#fff8e1', icon: <Clock size={14} /> },
@@ -14,7 +15,7 @@ const STATUS_CONFIG = {
 
 const DELIVERY_STEPS = ['confirmed', 'shipped', 'delivered'];
 
-export default function OrdersPage() {
+function OrdersPage() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [expandedOrder, setExpandedOrder] = useState(null);
@@ -159,3 +160,5 @@ export default function OrdersPage() {
     </>
   );
 }
+
+export default withAuth(OrdersPage);
