@@ -13,8 +13,29 @@ from .core.database import Base
 from .routers import products, cart, orders, wishlist
 from .routers import auth
 
-# Create all tables on startup
+# ── Schema migrations (safe ALTER TABLE for missing columns) ─────────────────
+def run_migrations():
+    """Add any columns that may be missing due to schema evolution.
+    Uses IF NOT EXISTS so it's safe to run on every startup."""
+    from sqlalchemy import text
+    migrations = [
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS hashed_password VARCHAR(200)",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(20)",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS address TEXT",
+        "ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT now()",
+    ]
+    with engine.connect() as conn:
+        for sql in migrations:
+            try:
+                conn.execute(text(sql))
+            except Exception:
+                pass  # column may already exist on older Postgres without IF NOT EXISTS
+        conn.commit()
+
+
+# Create all tables on startup, then patch any missing columns
 Base.metadata.create_all(bind=engine)
+run_migrations()
 
 app = FastAPI(
     title="Flipkart API",
