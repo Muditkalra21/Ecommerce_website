@@ -23,13 +23,15 @@ def run_migrations():
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS phone VARCHAR(20)",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS address TEXT",
         "ALTER TABLE users ADD COLUMN IF NOT EXISTS created_at TIMESTAMPTZ DEFAULT now()",
+        # Fix sequence out-of-sync (happens when rows were inserted bypassing the sequence)
+        "SELECT setval(pg_get_serial_sequence('users', 'id'), COALESCE(MAX(id), 0) + 1, false) FROM users",
     ]
     with engine.connect() as conn:
         for sql in migrations:
             try:
                 conn.execute(text(sql))
             except Exception:
-                pass  # column may already exist on older Postgres without IF NOT EXISTS
+                pass
         conn.commit()
 
 
